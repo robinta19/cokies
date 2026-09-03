@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Manager Dev</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="dark-theme">
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10c0-1.85-.52-3.58-1.42-5.07A4.5 4.5 0 0 1 16 11.5a4.5 4.5 0 0 1-4.5-4.5c0-1.12.4-2.14 1.07-2.93A9.956 9.956 0 0 0 12 2zm-4 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="app-title">Cookie Manager <span class="badge-dev">DEV</span></h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnOpenSettings" class="icon-btn" title="Pengaturan & Whitelist">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Active Domain Banner -->
+  <section class="domain-banner">
+    <div class="domain-info">
+      <span class="label">Target Domain:</span>
+      <span id="activeDomainText" class="domain-value" title="Memuat domain...">loading...</span>
+      <span id="whitelistStatusBadge" class="badge-status">Checking...</span>
+    </div>
+    <div id="whitelistQuickAction" class="whitelist-quick" style="display: none;">
+      <button id="btnQuickWhitelist" class="btn btn-xs btn-outline-warning">
+        + Whitelist Domain Ini
+      </button>
+    </div>
+  </section>
+
+  <!-- Main Action Bar -->
+  <section class="action-bar">
+    <div class="action-buttons">
+      <button id="btnExportModal" class="btn btn-secondary" title="Export seluruh cookie domain ini ke JSON">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Export</span>
+      </button>
+      <button id="btnImportModal" class="btn btn-primary" title="Import cookie dari data JSON">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Import</span>
+      </button>
+      <button id="btnRefreshCookies" class="btn btn-icon" title="Refresh Cookie">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="cookie-summary">
+      <span id="cookieCountText">0 Cookie</span>
+    </div>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <section class="filter-toolbar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="cookieSearchInput" placeholder="Cari nama atau nilai cookie..." autocomplete="off">
+      <button id="btnClearSearch" class="btn-clear" style="display: none;">&times;</button>
+    </div>
+    <div class="filter-dropdown">
+      <select id="cookieFilterSelect" class="select-filter">
+        <option value="all">Semua Cookie</option>
+        <option value="session">Hanya Sesi (Session)</option>
+        <option value="persistent">Persisten (Exp Date)</option>
+        <option value="secure">Hanya Secure</option>
+        <option value="httponly">Hanya HttpOnly</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Cookie List Container -->
+  <main class="content-container">
+    <div id="cookieList" class="cookie-list">
+      <!-- Cookie Cards akan dirender secara dinamis di sini -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <div class="empty-icon">🍪</div>
+      <p id="emptyStateMsg" class="empty-title">Tidak ada cookie ditemukan.</p>
+      <p class="empty-sub">Pastikan halaman tab aktif memuat cookie atau periksa filter pencarian.</p>
+    </div>
+
+    <!-- Whitelist Warning Notice -->
+    <div id="whitelistNotice" class="warning-banner" style="display: none;">
+      <div class="warning-header">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+        </svg>
+        <strong>Domain Belum Masuk Whitelist</strong>
+      </div>
+      <p class="warning-text">
+        Untuk keamanan data Anda, fitur Export dan Import dibatasi hanya pada domain yang telah diverifikasi di Whitelist.
+      </p>
+      <button id="btnNoticeAddWhitelist" class="btn btn-sm btn-warning">
+        Tambahkan Domain ke Whitelist
+      </button>
+    </div>
+  </main>
+
+  <!-- MODAL: Export Cookie -->
+  <div id="modalExport" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Export Cookies</h2>
+        <button class="modal-close" data-close="modalExport">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <div>
+            <strong>Peringatan Keamanan Sensitif!</strong>
+            <p>Data cookie dapat berisi token otentikasi atau sesi login aktif. Jangan bagikan file ini kepada pihak yang tidak dipercaya.</p>
+          </div>
+        </div>
+
+        <div class="export-meta-info">
+          <div class="meta-row">
+            <span>Domain:</span>
+            <strong id="exportMetaDomain">-</strong>
+          </div>
+          <div class="meta-row">
+            <span>Total Cookie:</span>
+            <strong id="exportMetaCount">0</strong>
+          </div>
+          <div class="meta-row">
+            <span>Waktu Export:</span>
+            <span id="exportMetaDate">-</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="exportJsonPreview">Preview Data JSON:</label>
+          <textarea id="exportJsonPreview" class="code-preview" readonly rows="7"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalExport">Tutup</button>
+        <button id="btnCopyExportJson" class="btn btn-outline-info">Salin ke Clipboard</button>
+        <button id="btnDownloadExportJson" class="btn btn-primary">Unduh File .JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Import Cookie -->
+  <div id="modalImport" class="modal-overlay" style="display: none;">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">Import Cookies</h2>
+        <button class="modal-close" data-close="modalImport">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Step 1: Input JSON -->
+        <div id="importStepInput">
+          <p class="section-desc">
+            Unggah file <code>.json</code> atau tempelkan (paste) data JSON hasil export dari browser asal untuk diimpor ke domain tab aktif (<code id="importTargetDomainText"></code>).
+          </p>
+
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="importJsonInput">JSON Cookies:</label>
+              <div class="upload-action-wrap">
+                <label for="inputUploadCookieFile" class="btn btn-xs btn-outline-info upload-label-btn" title="Pilih file JSON dari komputer">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span>Upload File JSON</span>
+                </label>
+                <input type="file" id="inputUploadCookieFile" accept=".json,application/json" style="display: none;">
+              </div>
+            </div>
+
+            <!-- Upload File Indicator Bar -->
+            <div id="uploadFileInfo" class="upload-file-info" style="display: none;">
+              <div class="file-name-badge">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM13 9V3.5L18.5 9H13z"/>
+                </svg>
+                <span id="uploadFileNameText">file.json</span>
+              </div>
+              <button id="btnRemoveUploadedFile" class="btn-clear-file" title="Hapus file">&times;</button>
+            </div>
+
+            <textarea id="importJsonInput" class="code-input" placeholder='{"exportDate": "...", "domain": "...", "cookies": [ ... ]}&#10;atau klik "Upload File JSON" di atas' rows="7"></textarea>
+            <div id="importParseError" class="input-error-msg" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Preview & Validation Table -->
+        <div id="importStepPreview" style="display: none;">
+          <div class="preview-stats">
+            <span class="badge badge-info"><span id="previewTotalCount">0</span> Cookie Terdeteksi</span>
+            <span id="previewDomainBadge" class="badge badge-warning">Domain Check</span>
+          </div>
+
+          <div class="preview-scroll">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Domain</th>
+                  <th>Path</th>
+                  <th>Flags</th>
+                  <th>Nilai (Pratinjau)</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Step 3: Result Summary -->
+        <div id="importStepResult" style="display: none;">
+          <div class="result-summary-box">
+            <div class="result-stat success">
+              <span class="stat-number" id="resultSuccessCount">0</span>
+              <span class="stat-label">Berhasil Diimpor</span>
+            </div>
+            <div class="result-stat failed">
+              <span class="stat-number" id="resultFailedCount">0</span>
+              <span class="stat-label">Gagal / Ditolak</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Log Proses Import:</label>
+            <div id="importResultLog" class="result-log-box"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalImport">Batal</button>
+        <button id="btnValidateImport" class="btn btn-info">Validasi & Preview</button>
+        <button id="btnBackToInput" class="btn btn-secondary" style="display: none;">Kembali Edit</button>
+        <button id="btnExecuteImport" class="btn btn-primary" style="display: none;">Terapkan Cookie Sekarang</button>
+        <button id="btnFinishImport" class="btn btn-success" style="display: none;">Selesai & Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

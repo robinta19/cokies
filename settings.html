@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengaturan - Cookie Manager Dev</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body class="dark-theme">
+  <div class="settings-layout">
+    <!-- Header -->
+    <header class="settings-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10c0-1.85-.52-3.58-1.42-5.07A4.5 4.5 0 0 1 16 11.5a4.5 4.5 0 0 1-4.5-4.5c0-1.12.4-2.14 1.07-2.93A9.956 9.956 0 0 0 12 2zm-4 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Cookie Manager Dev</h1>
+          <p class="subtitle">Pengaturan Whitelist Domain &amp; Backup Konfigurasi</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="settings-main">
+      <!-- Section: Whitelist Domain -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Whitelist Domain</h2>
+            <p class="card-desc">
+              Hanya domain yang terdaftar di bawah ini yang diizinkan untuk melakukan operasi <strong>Export</strong> dan <strong>Import</strong> cookie.
+            </p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form id="formAddDomain" class="domain-form">
+            <div class="form-row">
+              <input 
+                type="text" 
+                id="inputNewDomain" 
+                class="input-text" 
+                placeholder="Contoh: dev.local, localhost, *.staging.net" 
+                autocomplete="off"
+                required
+              >
+              <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Tambah Domain
+              </button>
+            </div>
+            <span class="hint-text">Format: nama domain (misal: <code>example.com</code>) atau wildcard subdomain (misal: <code>*.example.com</code>).</span>
+          </form>
+
+          <div class="domain-list-container">
+            <div class="list-header">
+              <span class="list-title">Daftar Domain Diizinkan (<span id="whitelistCount">0</span>)</span>
+              <button id="btnResetDefault" class="btn btn-xs btn-outline-secondary">Reset ke Default</button>
+            </div>
+            <ul id="whitelistUl" class="domain-list">
+              <!-- Render daftar domain -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Backup & Restore -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Backup &amp; Restore Konfigurasi</h2>
+            <p class="card-desc">
+              Simpan cadangan daftar domain whitelist Anda atau pulihkan dari file JSON konfigurasi sebelumnya.
+            </p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="backup-actions-grid">
+            <div class="backup-card">
+              <h3>Backup Konfigurasi</h3>
+              <p>Unduh seluruh daftar domain whitelist yang tersimpan di browser ke dalam file JSON lokal.</p>
+              <button id="btnExportBackup" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Unduh File Backup (.JSON)
+              </button>
+            </div>
+
+            <div class="backup-card">
+              <h3>Restore Konfigurasi</h3>
+              <p>Pulihkan daftar domain whitelist dari file backup JSON yang sebelumnya telah Anda simpan.</p>
+              <label for="inputRestoreFile" class="btn btn-outline-info upload-label">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Pilih File Backup JSON
+              </label>
+              <input type="file" id="inputRestoreFile" accept=".json,application/json" style="display: none;">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Keamanan & Info -->
+      <section class="card info-card">
+        <div class="card-body">
+          <h3>Prinsip Keamanan Ekstensi</h3>
+          <ul class="security-list">
+            <li>Ekstensi ini bekerja 100% di sisi browser lokal (Client-side). Tidak ada cookie atau data apapun yang dikirim ke server luar.</li>
+            <li>Whitelist domain mencegah ekspor dan impor tanpa sengaja pada situs yang tidak Anda kelola.</li>
+            <li>Hanya gunakan fitur import/export cookie pada environment development, testing, atau domain staging milik Anda sendiri.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
