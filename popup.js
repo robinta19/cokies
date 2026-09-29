@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let whitelistedDomains = [];
   let isWhitelisted = false;
   let importParsedCookies = [];
+  let savedSessions = [];
+  let activeSessionId = null;
 
   // DOM Elements - Header & Domain
   const activeDomainText = document.getElementById('activeDomainText');
@@ -19,6 +21,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnNoticeAddWhitelist = document.getElementById('btnNoticeAddWhitelist');
   const whitelistNotice = document.getElementById('whitelistNotice');
   const btnOpenSettings = document.getElementById('btnOpenSettings');
+
+  // DOM Elements - Session Switcher
+  const sessionSelect = document.getElementById('sessionSelect');
+  const btnApplySession = document.getElementById('btnApplySession');
+  const btnOpenSaveSessionModal = document.getElementById('btnOpenSaveSessionModal');
+  const btnDeleteSession = document.getElementById('btnDeleteSession');
+  const modalSaveSession = document.getElementById('modalSaveSession');
+  const inputSessionName = document.getElementById('inputSessionName');
+  const saveSessionDomainText = document.getElementById('saveSessionDomainText');
+  const saveSessionCookieCount = document.getElementById('saveSessionCookieCount');
+  const btnConfirmSaveSession = document.getElementById('btnConfirmSaveSession');
 
   // DOM Elements - Actions & Filter
   const btnExportModal = document.getElementById('btnExportModal');
@@ -215,6 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       await loadWhitelist();
       await fetchCookies();
+      await loadSessions();
     } catch (err) {
       console.error('Error saat inisialisasi tab:', err);
       showToast('Gagal memuat informasi tab aktif', 'error');
@@ -245,6 +259,233 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnRefreshCookies.style.transition = 'none';
     }, 300);
     showToast('Daftar cookie diperbarui', 'info');
+  });
+
+  // --------------------------------------------------------
+  // Multi-Session / Account Switcher
+  // --------------------------------------------------------
+  function getSessionStorageKey(domain) {
+    return `sessions_${domain.toLowerCase()}`;
+  }
+
+  async function loadSessions() {
+    if (!currentDomain) return;
+    try {
+      const key = getSessionStorageKey(currentDomain);
+      const data = await chrome.storage.local.get([key]);
+      savedSessions = Array.isArray(data[key]) ? data[key] : [];
+      renderSessionDropdown();
+    } catch (err) {
+      console.error('Gagal memuat sesi tersimpan:', err);
+    }
+  }
+
+  function renderSessionDropdown() {
+    sessionSelect.innerHTML = '<option value="">-- Pilih Akun / Sesi --</option>';
+    savedSessions.forEach((sess) => {
+      const opt = document.createElement('option');
+      opt.value = sess.id;
+      opt.textContent = `👤 ${sess.name} (${sess.cookies.length} cookie)`;
+      if (sess.id === activeSessionId) {
+        opt.selected = true;
+      }
+      sessionSelect.appendChild(opt);
+    });
+    updateSessionButtons();
+  }
+
+  function updateSessionButtons() {
+    const selectedId = sessionSelect.value;
+    btnApplySession.disabled = !selectedId;
+    btnDeleteSession.style.display = selectedId ? 'inline-flex' : 'none';
+  }
+
+  sessionSelect.addEventListener('change', () => {
+    updateSessionButtons();
+  });
+
+  btnOpenSaveSessionModal.addEventListener('click', () => {
+    if (!isWhitelisted) {
+      showToast('Domain ini belum di-whitelist.', 'warning');
+      return;
+    }
+    if (allCookies.length === 0) {
+      showToast('Tidak ada cookie aktif untuk disimpan sebagai sesi.', 'warning');
+      return;
+    }
+
+    saveSessionDomainText.textContent = currentDomain;
+    saveSessionCookieCount.textContent = `${allCookies.length} Cookie`;
+    inputSessionName.value = '';
+    openModal(modalSaveSession);
+    setTimeout(() => inputSessionName.focus(), 100);
+  });
+
+  inputSessionName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      btnConfirmSaveSession.click();
+    }
+  });
+
+  btnConfirmSaveSession.addEventListener('click', async () => {
+    const name = inputSessionName.value.trim();
+    if (!name) {
+      showToast('Silakan masukkan nama akun / label sesi!', 'warning');
+      inputSessionName.focus();
+      return;
+    }
+
+    const key = getSessionStorageKey(currentDomain);
+    const existingIndex = savedSessions.findIndex((s) => s.name.toLowerCase() === name.toLowerCase());
+
+    const sessionObj = {
+      id: existingIndex >= 0 ? savedSessions[existingIndex].id : `sess_${Date.now()}`,
+      name: name,
+      domain: currentDomain,
+      savedAt: new Date().toISOString(),
+      cookies: allCookies.map((c) => ({
+        name: c.name,
+        value: c.value,
+        domain: c.domain,
+        path: c.path,
+        secure: c.secure,
+        httpOnly: c.httpOnly,
+        sameSite: c.sameSite,
+        expirationDate: c.expirationDate,
+        session: c.session,
+        storeId: c.storeId
+      }))
+    };
+
+    if (existingIndex >= 0) {
+      savedSessions[existingIndex] = sessionObj;
+    } else {
+      savedSessions.push(sessionObj);
+    }
+
+    try {
+      await chrome.storage.local.set({ [key]: savedSessions });
+      activeSessionId = sessionObj.id;
+      closeModal(modalSaveSession);
+      renderSessionDropdown();
+      showToast(`Sesi akun "${name}" (${allCookies.length} cookie) berhasil disimpan!`, 'success');
+    } catch (err) {
+      console.error('Gagal menyimpan sesi:', err);
+      showToast('Gagal menyimpan sesi: ' + err.message, 'error');
+    }
+  });
+
+  btnApplySession.addEventListener('click', async () => {
+    const selectedId = sessionSelect.value;
+    const session = savedSessions.find((s) => s.id === selectedId);
+    if (!session) return;
+
+    if (!isWhitelisted) {
+      showToast('Domain belum diizinkan pada whitelist!', 'error');
+      return;
+    }
+
+    btnApplySession.disabled = true;
+    btnApplySession.textContent = 'Switching...';
+
+    try {
+      // 1. Hapus cookie aktif saat ini
+      for (const cookie of allCookies) {
+        const protocol = cookie.secure ? 'https://' : 'http://';
+        const cleanDomain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
+        const url = `${protocol}${cleanDomain}${cookie.path}`;
+        try {
+          await chrome.cookies.remove({
+            url: url,
+            name: cookie.name,
+            storeId: cookie.storeId
+          });
+        } catch (_) {}
+      }
+
+      // 2. Set cookie dari sesi yang dipilih
+      let successCount = 0;
+      for (const c of session.cookies) {
+        let targetCookieDomain = c.domain;
+        if (!targetCookieDomain || !currentDomain.endsWith(targetCookieDomain.replace(/^\./, ''))) {
+          targetCookieDomain = currentDomain;
+        }
+
+        const isSecure = Boolean(c.secure);
+        const protocol = isSecure ? 'https://' : 'http://';
+        const cleanHost = targetCookieDomain.startsWith('.') ? targetCookieDomain.slice(1) : targetCookieDomain;
+        const cookiePath = c.path || '/';
+        const cookieUrl = `${protocol}${cleanHost}${cookiePath}`;
+
+        const details = {
+          url: cookieUrl,
+          name: String(c.name),
+          value: String(c.value),
+          path: cookiePath,
+          secure: isSecure,
+          httpOnly: Boolean(c.httpOnly)
+        };
+
+        if (c.sameSite) {
+          const s = String(c.sameSite).toLowerCase();
+          if (['no_restriction', 'lax', 'strict', 'unspecified'].includes(s)) {
+            details.sameSite = s;
+          }
+        }
+
+        if (!c.session && c.expirationDate && typeof c.expirationDate === 'number') {
+          details.expirationDate = Math.round(c.expirationDate);
+        }
+
+        const isIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(cleanHost);
+        if (!isIp && targetCookieDomain) {
+          details.domain = targetCookieDomain;
+        }
+
+        let res = await setChromeCookie(details);
+        if (!res) {
+          delete details.domain;
+          res = await setChromeCookie(details);
+        }
+        if (res) successCount++;
+      }
+
+      activeSessionId = session.id;
+      showToast(`Beralih ke akun "${session.name}"! Merefresh halaman...`, 'success');
+
+      // 3. Reload tab & fetch cookies
+      if (currentTab && currentTab.id) {
+        chrome.tabs.reload(currentTab.id);
+      }
+      await fetchCookies();
+    } catch (err) {
+      console.error('Error saat switch sesi:', err);
+      showToast('Gagal menerapkan sesi: ' + err.message, 'error');
+    } finally {
+      btnApplySession.disabled = false;
+      btnApplySession.textContent = 'Switch';
+      updateSessionButtons();
+    }
+  });
+
+  btnDeleteSession.addEventListener('click', async () => {
+    const selectedId = sessionSelect.value;
+    const session = savedSessions.find((s) => s.id === selectedId);
+    if (!session) return;
+
+    if (confirm(`Hapus sesi akun "${session.name}"?`)) {
+      savedSessions = savedSessions.filter((s) => s.id !== selectedId);
+      const key = getSessionStorageKey(currentDomain);
+      try {
+        await chrome.storage.local.set({ [key]: savedSessions });
+        if (activeSessionId === selectedId) activeSessionId = null;
+        renderSessionDropdown();
+        showToast(`Sesi "${session.name}" berhasil dihapus.`, 'info');
+      } catch (err) {
+        showToast('Gagal menghapus sesi: ' + err.message, 'error');
+      }
+    }
   });
 
   // --------------------------------------------------------
