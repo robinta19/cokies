@@ -188,6 +188,68 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+/* Session Bar */
+.session-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  background-color: #162032;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.session-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.session-label svg {
+  color: var(--info);
+}
+
+.session-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.session-select {
+  flex: 1;
+  max-width: 200px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.session-select:focus {
+  border-color: var(--primary);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
 /* Action Bar */
 .action-bar {
   display: flex;
