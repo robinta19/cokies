@@ -85,3 +85,7 @@ Bebas dipakai, dimodifikasi, dan disebarluaskan — asal tetap ingat: *Dosa dita
 
 ## Development & Collaboration
 This project follows standard open source contribution workflows with automated testing and pair-programming reviews.
+
+### Code Style & Architecture
+- Follow standard JavaScript ESLint configurations.
+- Use async/await for Chrome extension runtime and storage APIs.
