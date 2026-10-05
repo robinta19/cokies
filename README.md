@@ -82,3 +82,6 @@ Punya ide fitur gokil atau nemu bug aneh?
 
 Project ini dilisensikan di bawah [MIT License](LICENSE).  
 Bebas dipakai, dimodifikasi, dan disebarluaskan — asal tetap ingat: *Dosa ditanggung masing-masing!* ✌️
+
+## Development & Collaboration
+This project follows standard open source contribution workflows with automated testing and pair-programming reviews.
